@@ -236,9 +236,6 @@ void sr_send_icmp3(struct sr_instance *sr,
                 sr_if_t *TO_THIS_ROUTER = sr_get_interface_ip(sr, in_iphdr->ip_dst);
             if(TO_THIS_ROUTER && (IPP_IS_TCP(in_iphdr) || IPP_IS_UDP(in_iphdr))) {
                 sender_ip = in_iphdr->ip_dst;
-                /* FMT("changing icmp ip_src to -> from\n"); */
-                /* print_addr_ip_int(out_if->ip); */
-                /* print_addr_ip_int(sender_ip); */
             }
         } 
 
