@@ -32,8 +32,7 @@ void handle_arpreply(
         struct sr_packet *pkt = req->packets;
         while(pkt) {
 
-            DECL_ETH(pkt->buf, pkt->len)  /* uint8_t *_pkt; hdr_t *_hdr */
-            /* print_hdrs(pkt->buf, pkt->len); */
+            DECL_ETH(pkt->buf, pkt->len);
 
             /* update packet dest MAC address */
             SET_MAC(ethhdr->ether_dhost, mac);
@@ -61,15 +60,15 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq* req){
         {
             int len = pkt->len;
             uint8_t *packet = pkt->buf;
-            DECL_ETH(packet, len)
+            DECL_ETH(packet, len);
 
             /* determine what ip to sendback icmp to */
             uint32_t sendback_ip = 0;
             if(ETHTYPE_IS_IP(ethhdr)) {
-                DECL_IP(packet, len)
+                DECL_IP(packet, len);
                 sendback_ip = iphdr->ip_src;
             } else if(ETHTYPE_IS_ARP(ethhdr)) {
-                DECL_ARP(packet, len)
+                DECL_ARP(packet, len);
                 sendback_ip = arphdr->ar_sip;
             }
             sr_send_host_unreachable(sr, pkt->buf, pkt->len, sendback_ip);

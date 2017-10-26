@@ -125,8 +125,8 @@ void set_ippkt(
     iphdr->ip_id = 0;                      /* may want to add one later */
     iphdr->ip_off = htons(IP_DF);          /* no fragmentation */
     iphdr->ip_ttl = 64;
-    iphdr->ip_p = ip_p,
-        iphdr->ip_src = ip_src;
+    iphdr->ip_p = ip_p;
+    iphdr->ip_src = ip_src;
     iphdr->ip_dst = ip_dest;
     ip_cksum(ippkt);
 }
@@ -152,10 +152,10 @@ void sr_send_arpquery(struct sr_instance *sr,
     int len = ETH_HDR_SIZE + ARP_HDR_SIZE;
     uint8_t *packet = (uint8_t *)malloc(len);
 
-    DECL_ETH(packet, len)
-        DECL_ARP(packet, len)
+    DECL_ETH(packet, len);
+    DECL_ARP(packet, len);
 
-        uint8_t arpquery_mac[ETHER_ADDR_LEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+    uint8_t arpquery_mac[ETHER_ADDR_LEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
     /* outgoing interface ip and mac */
     sr_rt_t *rt_entry = sr_search_rt(sr, next_hop_ip);
@@ -213,12 +213,12 @@ void sr_send_icmp3(struct sr_instance *sr,
     int len = ETH_HDR_SIZE + IP_HDR_SIZE + ICMP3_HDR_SIZE;
     uint8_t *packet = (uint8_t *)calloc(len, 1);
 
-    DECL_ETH(packet, len)
-        DECL_IP(packet, len)
-        DECL_ICMP3(packet, len)
+    DECL_ETH(packet, len);
+    DECL_IP(packet, len);
+    DECL_ICMP3(packet, len);
 
-        /* sets icmp3hdr */
-        set_icmppkt(icmp3pkt, type, code);
+    /* sets icmp3hdr */
+    set_icmppkt(icmp3pkt, type, code);
     memcpy(icmp3hdr->data, in_packet+ETH_HDR_SIZE, ICMP_DATA_SIZE);
     icmp_t3_cksum(icmp3pkt, ICMP3_HDR_SIZE);
 
@@ -230,14 +230,14 @@ void sr_send_icmp3(struct sr_instance *sr,
 
     /* special case, for host unreachable, icmp's ip_src should be ip_dst of message causing the error */
     uint32_t sender_ip = out_if->ip;
-    DECL_PKT_HDR(in_eth, in_packet, in_len, sr_ethernet_hdr_t)
-        if(ETHTYPE_IS_IP(in_ethhdr)) {
-            DECL_PKT_HDR(in_ip, in_packet + ETH_HDR_SIZE, in_len - ETH_HDR_SIZE, sr_ip_hdr_t)
-                sr_if_t *TO_THIS_ROUTER = sr_get_interface_ip(sr, in_iphdr->ip_dst);
-            if(TO_THIS_ROUTER && (IPP_IS_TCP(in_iphdr) || IPP_IS_UDP(in_iphdr))) {
-                sender_ip = in_iphdr->ip_dst;
-            }
-        } 
+    DECL_PKT_HDR(in_eth, in_packet, in_len, sr_ethernet_hdr_t);
+    if(ETHTYPE_IS_IP(in_ethhdr)) {
+        DECL_PKT_HDR(in_ip, in_packet + ETH_HDR_SIZE, in_len - ETH_HDR_SIZE, sr_ip_hdr_t);
+        sr_if_t *TO_THIS_ROUTER = sr_get_interface_ip(sr, in_iphdr->ip_dst);
+        if(TO_THIS_ROUTER && (IPP_IS_TCP(in_iphdr) || IPP_IS_UDP(in_iphdr))) {
+            sender_ip = in_iphdr->ip_dst;
+        }
+    } 
 
     set_ippkt(ippkt, 
             len-ETH_HDR_SIZE, ip_protocol_icmp, 
@@ -268,16 +268,16 @@ void sr_set_and_send_eth(struct sr_instance* sr,
         uint32_t next_hop_ip,   /* NBO */
         uint16_t etype          /* HBO */
         ) {
-    DECL_ETH(packet, len)
+    DECL_ETH(packet, len);
 
-        /* determine sender ip, for sending icmp error messages */
-        uint32_t sendback_ip;
+    /* determine sender ip, for sending icmp error messages */
+    uint32_t sendback_ip;
     if(ETHTYPE_IS_IP(ethhdr)) {
-        DECL_IP(packet, len)
-            sendback_ip = iphdr->ip_src;
+        DECL_IP(packet, len);
+        sendback_ip = iphdr->ip_src;
     } else if(ETHTYPE_IS_ARP(ethhdr)) {
-        DECL_ARP(packet, len)
-            sendback_ip = arphdr->ar_sip;
+        DECL_ARP(packet, len);
+        sendback_ip = arphdr->ar_sip;
     }
 
     /* ethertype */
@@ -367,90 +367,90 @@ void sr_handlepacket(struct sr_instance* sr,
     /* interface withwhich packet arrived at router */ 
     sr_if_t *in_if = sr_get_interface(sr, interface);
 
-    DECL_ETH(packet, len)           /* uint8_t *_pkt; hdr_t *_hdr */
-        if(ETHTYPE_IS_IP(ethhdr)) {
-            DECL_IP(packet, len)        /* uint8_t *_pkt; hdr_t *_hdr */
-                CHECK_CKSUM_IPPKT(ippkt)
+    DECL_ETH(packet, len);
+    if(ETHTYPE_IS_IP(ethhdr)) {
+        DECL_IP(packet, len);
+        CHECK_CKSUM_IPPKT(ippkt);
 
-                /* Check if packet destined for this router's interface */
-                sr_if_t *TO_THIS_ROUTER = sr_get_interface_ip(sr, iphdr->ip_dst);
-            if(TO_THIS_ROUTER) {
-                if(IPP_IS_ICMP(iphdr)) {
-                    DECL_ICMP(packet, len)        /* uint8_t *_pkt; hdr_t *_hdr */
-                        CHECK_CKSUM(icmppkt, len-(icmppkt-packet))
-                        if(!ICMP_IS_ECHO_REQUEST(icmphdr)) 
-                            return;
-
-                    FMT("ICMP echo request => reply...\n");
-                    set_icmppkt(icmppkt, 
-                            icmp_type_echo_reply, 0);
-                    icmp_cksum(icmppkt, len - (icmppkt - packet));
-
-                    set_ippkt(ippkt, 
-                            len-ETH_HDR_SIZE, ip_protocol_icmp, 
-                            iphdr->ip_dst, iphdr->ip_src);   /* switch src and dest ip */
-
-                    sr_set_and_send_eth(sr, 
-                            packet, len, 
-                            iphdr->ip_dst, ethertype_ip);
-
-                } else if(IPP_IS_TCP(iphdr) || IPP_IS_UDP(iphdr)) {
-                    FMT("TCP UDP => port unreachable...\n");
-                    sr_send_port_unreachable(sr, packet, len, iphdr->ip_src);
-                }
-            } else {
-                FMT("IP => forward ...\n");
-
-                /* handle ttl over */
-                if(IPTTL_OVER) {
-                    sr_send_time_exceeded(sr, packet, len, iphdr->ip_src);
+        /* Check if packet destined for this router's interface */
+        sr_if_t *TO_THIS_ROUTER = sr_get_interface_ip(sr, iphdr->ip_dst);
+        if(TO_THIS_ROUTER) {
+            if(IPP_IS_ICMP(iphdr)) {
+                DECL_ICMP(packet, len);
+                CHECK_CKSUM(icmppkt, len-(icmppkt-packet));
+                if(!ICMP_IS_ECHO_REQUEST(icmphdr)) 
                     return;
-                }
-                iphdr->ip_ttl -= 1;
-                ip_cksum(ippkt);
+
+                FMT("ICMP echo request => reply...\n");
+                set_icmppkt(icmppkt, 
+                        icmp_type_echo_reply, 0);
+                icmp_cksum(icmppkt, len - (icmppkt - packet));
+
+                set_ippkt(ippkt, 
+                        len-ETH_HDR_SIZE, ip_protocol_icmp, 
+                        iphdr->ip_dst, iphdr->ip_src);   /* switch src and dest ip */
 
                 sr_set_and_send_eth(sr, 
                         packet, len, 
                         iphdr->ip_dst, ethertype_ip);
+
+            } else if(IPP_IS_TCP(iphdr) || IPP_IS_UDP(iphdr)) {
+                FMT("TCP UDP => port unreachable...\n");
+                sr_send_port_unreachable(sr, packet, len, iphdr->ip_src);
             }
-            return;
-        } else if(ETHTYPE_IS_ARP(ethhdr)){
-            DECL_ARP(packet, len)        /* uint8_t *_pkt; hdr_t *_hdr */
-                sr_if_t *iface = sr_get_interface_ip(sr, arphdr->ar_tip);
+        } else {
+            FMT("IP => forward ...\n");
 
-            if(iface && ARP_IS_REQ) 
-            {
-                FMT("arp req to router => reply...\n");
+            /* handle ttl over */
+            if(IPTTL_OVER) {
+                sr_send_time_exceeded(sr, packet, len, iphdr->ip_src);
+                return;
+            }
+            iphdr->ip_ttl -= 1;
+            ip_cksum(ippkt);
 
-                set_arppkt(arppkt, 
-                        arp_op_reply,
-                        iface->addr, iface->ip,             /* source */
-                        arphdr->ar_sha, arphdr->ar_sip);    /* target */
-
-                set_eth(ethpkt, 
-                        arphdr->ar_tha, in_if->addr, ethertype_arp);
-
-                sr_send_packet(sr, packet, len, interface);
-            } else if(iface && ARP_IS_REP) 
-            {
-                FMT("arp reply to router => cache...\n");
-                handle_arpreply(sr, 
-                        arphdr->ar_sha,     /* caching mac */
-                        arphdr->ar_sip);    /* caching ip  */
-
-            } else if(!iface && ARP_IS_REQ) {
-                FMT("arp request (!this router) => forward\n");
-                sr_set_and_send_eth(sr, 
-                        packet, len, 
-                        arphdr->ar_tip, ethertype_arp);
-            } else if(!iface && ARP_IS_REP) {
-                FMT("arp reply (!this router) => forward\n");
-                sr_set_and_send_eth(sr, 
-                        packet, len, 
-                        arphdr->ar_tip, ethertype_arp);
-            } else { NO_REACH }
-            return;
+            sr_set_and_send_eth(sr, 
+                    packet, len, 
+                    iphdr->ip_dst, ethertype_ip);
         }
+        return;
+    } else if(ETHTYPE_IS_ARP(ethhdr)){
+        DECL_ARP(packet, len);
+        sr_if_t *iface = sr_get_interface_ip(sr, arphdr->ar_tip);
+
+        if(iface && ARP_IS_REQ) 
+        {
+            FMT("arp req to router => reply...\n");
+
+            set_arppkt(arppkt, 
+                    arp_op_reply,
+                    iface->addr, iface->ip,             /* source */
+                    arphdr->ar_sha, arphdr->ar_sip);    /* target */
+
+            set_eth(ethpkt, 
+                    arphdr->ar_tha, in_if->addr, ethertype_arp);
+
+            sr_send_packet(sr, packet, len, interface);
+        } else if(iface && ARP_IS_REP) 
+        {
+            FMT("arp reply to router => cache...\n");
+            handle_arpreply(sr, 
+                    arphdr->ar_sha,     /* caching mac */
+                    arphdr->ar_sip);    /* caching ip  */
+
+        } else if(!iface && ARP_IS_REQ) {
+            FMT("arp request (!this router) => forward\n");
+            sr_set_and_send_eth(sr, 
+                    packet, len, 
+                    arphdr->ar_tip, ethertype_arp);
+        } else if(!iface && ARP_IS_REP) {
+            FMT("arp reply (!this router) => forward\n");
+            sr_set_and_send_eth(sr, 
+                    packet, len, 
+                    arphdr->ar_tip, ethertype_arp);
+        } else { NO_REACH }
+        return;
+    }
 
     FMT("...Ignoring this packets...\n");
 

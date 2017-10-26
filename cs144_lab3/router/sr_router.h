@@ -65,7 +65,7 @@
     HDR_TYPE *NAME##hdr= PKT_HDR_CAST(BUF, HDR_TYPE); \
     MARK_USED(NAME##pkt); \
     MARK_USED(NAME##hdr); \
-    fprintf(stderr, "Declaring " #NAME " (%p, %lu) ...\n", &BUF, (unsigned long)(LEN)); \
+    fprintf(stderr, "Declaring " #NAME " (%p, %lu) ...\n", &BUF, (unsigned long)(LEN)) \
 
 
 /* consider packet starting at where hdr starts */
@@ -93,7 +93,7 @@
 #define CHECK_CKSUM(BUF, LEN) \
     do { \
         if(cksum(BUF, LEN)) { fprintf(stderr, #BUF " packet (length %lu) has incorrect checksum %d\n", LEN, cksum(BUF, LEN)); } \
-    } while(0);
+    } while(0)
 
 #define CHECK_CKSUM_IPPKT(BUF) CHECK_CKSUM(BUF, IP_HDR_SIZE)
 #define PACKET_DUMP_SIZE 1024
