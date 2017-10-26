@@ -27,18 +27,39 @@
  * Method:
  *
  *---------------------------------------------------------------------*/
+
+
+int mask_len(uint32_t mask) {
+    int len = 0;
+    uint32_t match = 0x80000000;
+    while((match != 0) && ((match & mask) != 0)) {
+        match = match >> 1;
+        len++;
+    }
+    return len;
+}
+
 sr_rt_t* sr_search_rt(struct sr_instance *sr, uint32_t ip)
 {
     sr_rt_t *rt_walker = sr->routing_table;
+    int mlen = -1;
+    sr_rt_t *found = NULL;
+
+    /* entry has longer prefix if 
+     *      mask is longer, and 
+     *      masked IPs are equivalent 
+     * keep track of longest mask and corresponding list walker so far */
     while(rt_walker){
-        /* fprintf(stderr, "walker--\n"); */
-        /* print_addr_ip_int(ntohl(rt_walker->dest.s_addr)); */
-        /* sr_print_routing_entry(rt_walker); */
-        if((uint32_t)rt_walker->dest.s_addr == ip)
-            return rt_walker;
+        if((mask_len(rt_walker->mask.s_addr) > mlen)
+                &&  (ip & rt_walker->mask.s_addr) == 
+                    (rt_walker->dest.s_addr & rt_walker->mask.s_addr)) {
+            found = rt_walker;
+            mlen = mask_len(rt_walker->mask.s_addr);
+        }
         rt_walker = rt_walker->next; 
     }
-    return 0;
+
+    return found;
 }
 
 /*---------------------------------------------------------------------
@@ -110,7 +131,7 @@ int sr_load_rt(struct sr_instance* sr,const char* filename)
  *---------------------------------------------------------------------*/
 
 void sr_add_rt_entry(struct sr_instance* sr, struct in_addr dest,
-struct in_addr gw, struct in_addr mask,char* if_name)
+        struct in_addr gw, struct in_addr mask,char* if_name)
 {
     struct sr_rt* rt_walker = 0;
 
@@ -135,7 +156,7 @@ struct in_addr gw, struct in_addr mask,char* if_name)
     /* -- find the end of the list -- */
     rt_walker = sr->routing_table;
     while(rt_walker->next){
-      rt_walker = rt_walker->next; 
+        rt_walker = rt_walker->next; 
     }
 
     rt_walker->next = (struct sr_rt*)malloc(sizeof(struct sr_rt));
@@ -168,7 +189,7 @@ void sr_print_routing_table(struct sr_instance* sr)
     printf("Destination\tGateway\t\tMask\tIface\n");
 
     rt_walker = sr->routing_table;
-    
+
     sr_print_routing_entry(rt_walker);
     while(rt_walker->next)
     {

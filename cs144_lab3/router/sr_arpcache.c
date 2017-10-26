@@ -50,7 +50,7 @@ void handle_arpreply(
 void handle_arpreq(struct sr_instance *sr, struct sr_arpreq* req){
 
     time_t now = time(NULL);
-    if(difftime(now, req->sent) <= 1 && req->times_sent)
+    if(difftime(now, req->sent) <= 0.1 && req->times_sent)
         return; 
 
     if(req->times_sent > 5.0) {
@@ -64,7 +64,7 @@ void handle_arpreq(struct sr_instance *sr, struct sr_arpreq* req){
             DECL_ETH(packet, len)
 
             /* determine what ip to sendback icmp to */
-            uint32_t sendback_ip;
+            uint32_t sendback_ip = 0;
             if(ETHTYPE_IS_IP(ethhdr)) {
                 DECL_IP(packet, len)
                 sendback_ip = iphdr->ip_src;
