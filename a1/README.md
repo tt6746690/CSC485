@@ -1,35 +1,10 @@
 
 
-+ steps for sending packet out 
-    - [x] look up routing table, `dst_ip -> out_if` (outgoing interface) 
-        + use `sr_search_rt(sr, ip)`
-    - [] search for arpcache, get `dst_ip -> dst_mac` mapping
-        + use `cache_entry sr_arpcache_lookup(cache, ip)`
-        + if `cache_entry` exists,
-            + update ethernet destination mac with `cache_entry->mac`
-            + update ethernet source mac with `out_if->addr`
-            + update ethernet protocol type (mostly same)
-            + send packet 
-        + otherwise, 
-            + queues request with `arpcache_queuereq(next_hop_ip, packet, len)`
-            + then handle it...
-
-
-
-#### Links 
-
-+ [mininet](http://mininet.org/)
-    + [doc](https://github.com/mininet/mininet/wiki/Documentation)
-    + [walkthrough](http://mininet.org/walkthrough/)
-+ [tcpdump](https://en.wikipedia.org/wiki/Tcpdump)
-+ [ping utility](https://en.wikipedia.org/wiki/Ping_(networking_utility))
-+ [rfc792 icmp](https://tools.ietf.org/html/rfc792)
-
-
 #### Setup
 
 ```bash
 # set up vm http://mininet.org/vm-setup-notes/
+# USERNAME: mininet PASSEWORD: mininet
 
 # set up ssh 
 # VirtualBox for macos: Network -> change NAT to bridged
@@ -49,12 +24,12 @@ sudo apt-get install traceroute wget
 # checkout ~/pox (provided by vm, not ~/cs144_lab3)
 cd ~/pox && git checkout f95dd1a81584d716823bbf565fa68254416af603
 
+### A1
 # configure pox module
 cd ~/cs144_lab3 && ./config.sh
 
 # Window 1, pox controller (run it before ./run_mininet.sh)
 cd ~/cs144_lab3 && ln -s ../pox && ./run_pox.sh
-
 # Window 2, mininet
 cd ~/cs144_lab3 && ./run_mininet.sh
 
@@ -63,7 +38,37 @@ cd ~/cs144_lab3 && ./sr_solution
 
 # make 
 cd ~/cs144_lab3/router/ && make && ./sr
+
+### A2
+# configure env 
+cd ~/cs144_lab5 && ./config.sh
+
+# ~\cs144_lab5\lab5.py uses the wrong notation for functions. It uses x_y() intead of xY(). 
+# So you'll need to go in and change add_host() to addHost() for example
+
+# Also need to add in sr_nat.h and sr_nat.c for proper compilation 
+
+# Window 1, pox controller (run it before ./run_mininet.sh)
+cd ~/cs144_lab5 && ln -s ../pox && ./run_pox.sh
+# Window 2, mininet
+cd ~/cs144_lab5 && ./run_mininet.sh
+
+# Window 3, test solution 
+cd ~/cs144_lab5 && ./sr_nat -n
+# In mininet > client ping -n 3 172.64.3.21
 ```
+
+#### Links 
+
++ [mininet](http://mininet.org/)
+    + [doc](https://github.com/mininet/mininet/wiki/Documentation)
+    + [walkthrough](http://mininet.org/walkthrough/)
++ [tcpdump](https://en.wikipedia.org/wiki/Tcpdump)
++ [ping utility](https://en.wikipedia.org/wiki/Ping_(networking_utility))
++ [rfc792 ICMP](https://tools.ietf.org/html/rfc792)
++ [rfc4787 NAT](https://tools.ietf.org/html/rfc4787)
+
+
 
 #### Auto tester descriptions 
 + init: untars the archive and starts grader
