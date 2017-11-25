@@ -157,6 +157,29 @@ void print_hdr_arp(uint8_t *buf) {
     print_addr_ip_int(ntohl(arp_hdr->ar_tip));
 }
 
+void print_hdr_tcp(uint8_t *buf) {
+    sr_tcp_hdr_t* tcphdr = (sr_tcp_hdr_t*)(buf);
+    fprintf(stderr, "TCP header\n");
+    fprintf(stderr, "source port: %u\n", ntohs(tcphdr->port_src));
+    fprintf(stderr, "destin port: %u\n", ntohs(tcphdr->port_dst));
+    fprintf(stderr, "seq        : %u\n", ntohl(tcphdr->seq));
+    fprintf(stderr, "ack        : %u\n", ntohl(tcphdr->ack));
+    fprintf(stderr, "offset     : %u\n", tcphdr->data_offset);
+    fprintf(stderr, "flags      : %d", tcphdr->flags);
+
+    if (TCP_URG & tcphdr->flags) fprintf(stderr, " urg ");
+    if (TCP_ACK & tcphdr->flags) fprintf(stderr, " ack ");
+    if (TCP_PSH & tcphdr->flags) fprintf(stderr, " psh ");
+    if (TCP_RST & tcphdr->flags) fprintf(stderr, " rst ");
+    if (TCP_SYN & tcphdr->flags) fprintf(stderr, " syn ");
+    if (TCP_FIN & tcphdr->flags) fprintf(stderr, " fin ");
+    fprintf(stderr, "\n");
+
+    fprintf(stderr, "window size: %u\n", ntohs(tcphdr->window_size));
+    fprintf(stderr, "checksum   : %u\n", ntohs(tcphdr->checksum));
+    fprintf(stderr, "uptr       : %u\n", ntohs(tcphdr->urgent_ptr));
+}
+
 /* Prints out all possible headers, starting from Ethernet */
 void print_hdrs(uint8_t *buf, uint32_t length) {
 

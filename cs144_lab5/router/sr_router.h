@@ -137,6 +137,17 @@
 #define IF_OUTBOUND(interface) (IF_IS(interface, "eth1"))
 #define IF_INBOUND(interface)  (IF_IS(interface, "eth2"))
 
+/* tcp flags */
+#define TCPFLAG_IS(tcphdr, what) ((tcphdr)->flags & what)
+#define TCPFLAG_IS_URG(tchphdr) (TCPFLAG_IS(tcphdr, TCP_URG))
+#define TCPFLAG_IS_ACK(tchphdr) (TCPFLAG_IS(tcphdr, TCP_ACK))
+#define TCPFLAG_IS_PSH(tchphdr) (TCPFLAG_IS(tcphdr, TCP_PSH))
+#define TCPFLAG_IS_RST(tchphdr) (TCPFLAG_IS(tcphdr, TCP_RST))
+#define TCPFLAG_IS_SYN(tchphdr) (TCPFLAG_IS(tcphdr, TCP_SYN))
+#define TCPFLAG_IS_FIN(tchphdr) (TCPFLAG_IS(tcphdr, TCP_FIN))
+
+#define TCP_PORT_DST(tcphdr) (ntohs((tcphdr)->port_dst)) 
+
 
 /* macro to facilitate return statement */
 /* next_hop_ip --rt--> outgoing iface

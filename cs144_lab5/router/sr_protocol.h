@@ -96,6 +96,12 @@ struct sr_tcp_hdr {
     uint32_t seq;
     uint32_t ack;
     uint8_t  data_offset;   /* first 4 bits */
+#define TCP_URG 0x20
+#define TCP_ACK 0x10
+#define TCP_PSH 0x8
+#define TCP_RST 0x4
+#define TCP_SYN 0x2
+#define TCP_FIN 0x1
     uint8_t  flags;
     uint16_t window_size;
     uint16_t checksum;      /* over header+payload+pseudoheader */

@@ -18,6 +18,7 @@
  **********************************************************************/
 
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -463,11 +464,27 @@ void sr_handlepacket(struct sr_instance* sr,
                     sr_nat_mapping_t* mapping; 
                     if (IF_INBOUND(interface)) {
                         FMT("\tTCP Inbound\n");
+                        print_hdr_tcp(tcppkt);
                         mapping = sr_nat_lookup_external(&sr->nat, tcphdr->port_dst, nat_mapping_tcp);
-                        if(!mapping) return;
+                        if(!mapping) {
+                            /* check for unsolicited SYN */
+                            if (TCPFLAG_IS_SYN(tcphdr) && TCP_PORT_DST(tcphdr) > 1024) {
+                                sleep(6.0);
+                                sr_send_port_unreachable(sr, packet, len, iphdr->ip_src);
+                            }
+                            if (TCPFLAG_IS_SYN(tcphdr) && TCP_PORT_DST(tcphdr) == 22) {
+                                sr_send_port_unreachable(sr, packet, len, iphdr->ip_src);
+                            }
+                            return;
+                        }
                         iphdr->ip_dst    = mapping->ip_int;
                         tcphdr->port_dst = mapping->aux_int;
                         free(mapping);
+                    } else if (IF_OUTBOUND(interface)) {
+                        if (TCPFLAG_IS_SYN(tcphdr)) {
+                            sr_send_port_unreachable(sr, packet, len, iphdr->ip_src);
+                            return;
+                        }
                     } else { NO_REACH return; }
 
                     tcp_cksum(packet, len);
@@ -512,8 +529,9 @@ void sr_handlepacket(struct sr_instance* sr,
                     CHECK_TCP_CKSUM(packet, len);
 
                     sr_nat_mapping_t* mapping; 
-                    if (IF_OUTBOUND(interface)) {
+                    if (IF_OUTBOUND(interface)) { 
                         FMT("\tTCP Outbound\n");
+                        print_hdr_tcp(tcppkt);
                         mapping = sr_nat_insert_mapping(&sr->nat, iphdr->ip_src, tcphdr->port_src, nat_mapping_tcp);
                         iphdr->ip_src    = mapping->ip_ext;
                         tcphdr->port_src = mapping->aux_ext;
